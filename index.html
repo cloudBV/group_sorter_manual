@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Group Sorter – drag and drop names into groups</title>
+<meta name="description" content="A small desktop app for sorting a list of names into groups by dragging and dropping. Built with Python and tkinter.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F4F0; --surface:#FFFFFF; --pool:#ECEAE4; --line:#CCCAC3;
+  --text:#222222; --muted:#6b6a66; --link:#1A6B3C; --danger:#CC4444;
+  --g1:#EAF3FE; --g2:#EAF6EE; --g3:#FEF6E4; --g4:#FDE8E8; --g5:#F3EAFE; --g6:#E4F7F3;
+  --font:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#1a1b1a; --surface:#242524; --pool:#202120; --line:#3d3e3b;
+    --text:#ecebe6; --muted:#a3a29d; --link:#6fcf97; --danger:#ef7b7b;
+    --g1:#1f2a38; --g2:#1f2d25; --g3:#352f1f; --g4:#382323; --g5:#2c2338; --g6:#1d3230;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:400 1.0625rem/1.65 var(--font);
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+}
+a{color:var(--link)}
+a:focus-visible,.btn:focus-visible{outline:3px solid var(--link);outline-offset:3px}
+.wrap{max-width:62rem;margin:0 auto;padding:0 1.5rem}
+
+/* header */
+header{padding:4.5rem 0 2.5rem}
+h1{font-size:clamp(2.75rem,8vw,5rem);line-height:1;letter-spacing:-.035em;font-weight:800;margin:0 0 1.25rem}
+.lede{font-size:1.3rem;line-height:1.5;max-width:36rem;margin:0 0 2rem;color:var(--text)}
+.actions{display:flex;flex-wrap:wrap;gap:.75rem}
+.btn{
+  display:inline-block;text-decoration:none;font-weight:700;font-size:.95rem;
+  padding:.7rem 1.2rem;border:1px solid var(--text);border-radius:4px;
+  background:var(--surface);color:var(--text);
+}
+.btn:hover{background:var(--g2)}
+.btn.primary{background:var(--text);color:var(--bg)}
+.btn.primary:hover{opacity:.88;background:var(--text)}
+
+/* screenshot */
+.shot{margin:0 0 4rem}
+.shot img{
+  display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px;
+  background:var(--pool);
+}
+.shot figcaption{margin-top:.75rem;font-size:.9rem;color:var(--muted)}
+
+/* sections */
+section{padding:0 0 4rem}
+h2{font-size:1.75rem;line-height:1.2;letter-spacing:-.02em;margin:0 0 1.5rem}
+h3{font-size:1.1rem;margin:0 0 .25rem}
+p{margin:0 0 1rem;max-width:42rem}
+
+/* features: each takes one of the app's own group colours */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr));gap:1rem;padding:0;margin:0;list-style:none}
+.features li{border:1px solid var(--line);border-radius:4px;padding:1.1rem 1.25rem}
+.features li:nth-child(6n+1){background:var(--g1)}
+.features li:nth-child(6n+2){background:var(--g2)}
+.features li:nth-child(6n+3){background:var(--g3)}
+.features li:nth-child(6n+4){background:var(--g4)}
+.features li:nth-child(6n+5){background:var(--g5)}
+.features li:nth-child(6n+6){background:var(--g6)}
+.features p{margin:0;font-size:.98rem;max-width:none}
+
+/* how to */
+.steps{max-width:42rem;padding-left:1.4rem;margin:0 0 1.5rem}
+.steps li{margin-bottom:.6rem;padding-left:.3rem}
+.steps li::marker{font-weight:800}
+pre{
+  background:var(--pool);border:1px solid var(--line);border-radius:4px;
+  padding:1rem 1.25rem;overflow-x:auto;font:.95rem/1.5 var(--mono);margin:0 0 1rem;max-width:42rem;
+}
+code{font-family:var(--mono);font-size:.92em}
+p code,li code{background:var(--pool);border:1px solid var(--line);border-radius:3px;padding:.05em .35em}
+
+/* tables */
+.scroll{overflow-x:auto;max-width:42rem}
+table{border-collapse:collapse;width:100%;font-size:.98rem}
+th,td{text-align:left;padding:.6rem .9rem .6rem 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:700;white-space:nowrap}
+
+footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--muted);font-size:.95rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:.5rem 2rem;justify-content:space-between}
+
+@media (max-width:40rem){
+  header{padding-top:3rem}
+  .lede{font-size:1.15rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Group Sorter</h1>
+    <p class="lede">A small desktop app for splitting a list of names into groups. Type or paste your names, then drag each one into the group it belongs to.</p>
+    <div class="actions">
+      <a class="btn primary" href="https://cloudbv.itch.io/group-sorter-manual">Download on itch.io</a>
+      <a class="btn" href="https://github.com/cloudBV/group_sorter_manual">View source on GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <figure class="shot">
+      <img src="screenshot.png" alt="The Group Sorter window. Unassigned names sit in a grey pool at the top, with five coloured group boxes below containing names such as Dexter, David, Deron and Gio.">
+      <figcaption>Unassigned names at the top, colour-coded groups below.</figcaption>
+    </figure>
+
+    <section aria-labelledby="what">
+      <h2 id="what">What it does</h2>
+      <p>Group Sorter is for the moments when you need to divide people into teams, tables, or sections and want to place each person by hand instead of leaving it to a random shuffle.</p>
+      <p>Every name starts in the Unassigned pool. Create as many groups as you need, drag names into them, and move them around until the grouping looks right. When you're done, export the result as a text file or save the session to pick up later.</p>
+    </section>
+
+    <section aria-labelledby="features">
+      <h2 id="features">Features</h2>
+      <ul class="features">
+        <li><h3>Drag and drop</h3><p>Grab a name and drop it on any group, or back on the pool to unassign it. A floating copy follows your cursor while you drag.</p></li>
+        <li><h3>Add names your way</h3><p>Type a name and press Enter, or use Paste list to add many at once from your clipboard. Lines and tab-separated values both work, and duplicates are skipped.</p></li>
+        <li><h3>Unlimited groups</h3><p>Add groups with one click. Each gets its own pastel colour, and the layout wraps to three columns.</p></li>
+        <li><h3>Quick renaming</h3><p>Double-click a name to fix a typo. Double-click a group title to rename it.</p></li>
+        <li><h3>Save and load</h3><p>Save your whole session as a <code>.json</code> file and load it again later, with names and groups exactly as you left them.</p></li>
+        <li><h3>Export to text</h3><p>Export a readable <code>.txt</code> summary with a timestamp, each group's members, and anyone still unassigned.</p></li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="run">
+      <h2 id="run">Run it yourself</h2>
+      <p>Group Sorter uses only Python's standard library, so there is nothing to install besides Python 3 with tkinter. tkinter is included with the standard Python installers for Windows and macOS.</p>
+      <ol class="steps">
+        <li>Download or clone the repository.</li>
+        <li>Open a terminal in the project folder.</li>
+        <li>Start the app:</li>
+      </ol>
+      <pre><code>python group_sorter.py</code></pre>
+      <p>Prefer not to use Python? The packaged download is on the <a href="https://cloudbv.itch.io/group-sorter-manual">itch.io page</a>.</p>
+    </section>
+
+    <section aria-labelledby="use">
+      <h2 id="use">Using the app</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th scope="col">To do this</th><th scope="col">Do this</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Add one name</th><td>Type it in the box and press Enter or click <strong>+ Add</strong></td></tr>
+            <tr><th scope="row">Add many names</th><td>Copy a list, then click <strong>Paste list</strong></td></tr>
+            <tr><th scope="row">Create a group</th><td>Click <strong>+ New group</strong></td></tr>
+            <tr><th scope="row">Move a name</th><td>Drag it onto a group, or onto the Unassigned pool</td></tr>
+            <tr><th scope="row">Edit a name or group title</th><td>Double-click it, then press Enter to confirm or Esc to cancel</td></tr>
+            <tr><th scope="row">Remove a name or group</th><td>Click the ✕ beside it. A removed group's names return to the pool.</td></tr>
+            <tr><th scope="row">Keep your work</th><td><strong>Save</strong> and <strong>Load</strong> use <code>.json</code>. <strong>Export .txt</strong> makes a plain-text report.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="built">
+      <h2 id="built">Built with</h2>
+      <p>Python 3 and tkinter, in a single script file. No third-party packages.</p>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Made by cloudBV</span>
+    <span><a href="https://github.com/cloudBV/group_sorter_manual">GitHub</a> &nbsp; <a href="https://cloudbv.itch.io/group-sorter-manual">itch.io</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
